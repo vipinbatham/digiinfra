@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionAI - Road Defect Detection for HNAI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --accent: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --success: #4bb543;
+            --warning: #f9a826;
+            --danger: #e63946;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #fff;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header & Navigation */
+        header {
+            background-color: rgba(255, 255, 255, 0.98);
+            box-shadow: var(--shadow);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            padding: 15px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo i {
+            color: var(--secondary);
+        }
+
+        .logo span {
+            color: var(--secondary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            font-size: 1.05rem;
+            position: relative;
+            padding: 5px 0;
+            transition: var(--transition);
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        nav a.active {
+            color: var(--primary);
+        }
+
+        nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary);
+            animation: lineGrow 0.3s ease-out;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        /* Main Content */
+        main {
+            padding-top: 80px;
+            min-height: calc(100vh - 120px);
+        }
+
+        .page {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s forwards;
+        }
+
+        .page.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 100px 0 80px;
+            background: linear-gradient(135deg, #f5f7ff 0%, #eef1ff 100%);
+            border-radius: 0 0 40px 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path fill="%234361ee" opacity="0.05" d="M0,0 L100,0 L100,100 Q50,80 0,100 Z"></path></svg>');
+            background-size: cover;
+        }
+
+        .hero-content {
+            max-width: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: fadeInLeft 0.8s ease-out 0.2s both;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--gray);
+            margin-bottom: 30px;
+            animation: fadeInLeft 0.8s ease-out 0.4s both;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInLeft 0.8s ease-out 0.6s both;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(67, 97, 238, 0.4);
+        }
+
+        .cta-button:active {
+            transform: translateY(-2px);
+        }
+
+        /* SVG Graphics Container */
+        .svg-container {
+            position: absolute;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .hero-svg {
+            position: absolute;
+            top: 20%;
+            right: 10%;
+            width: 400px;
+            height: 300px;
+            opacity: 0.8;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .stats-bg-svg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            z-index: 0;
+        }
+
+        /* Process Section */
+        .process-section {
+            padding: 80px 0;
+            background-color: #f8f9fa;
+            border-radius: 40px 40px 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .process-container {
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+
+        .process-step {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .process-step.reverse {
+            flex-direction: row-reverse;
+        }
+
+        .step-number {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+        }
+
+        .step-content {
+            flex: 1;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-content h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .step-svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+
+        .process-svg-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 300px;
+            opacity: 0.1;
+            z-index: 0;
+        }
+
+        /* Section Styling */
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            display: inline-block;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+
+        /* About Page */
+        .about-content {
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            align-items: center;
+        }
+
+        .about-text h3 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        .about-text p {
+            margin-bottom: 20px;
+            color: var(--gray);
+        }
+
+        .about-features {
+            margin-top: 40px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .feature.animated {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .feature i {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-right: 15px;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .feature h4 {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+
+        .about-visual {
+            position: relative;
+        }
+
+        .visual-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .visual-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+
+        .about-svg-bg {
+            position: absolute;
+            top: -100px;
+            left: -100px;
+            width: 500px;
+            height: 500px;
+            opacity: 0.05;
+            z-index: 0;
+        }
+
+        /* Team Section */
+        .team-section {
+            padding: 80px 0;
+            background-color: #f8f9fa;
+            border-radius: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .team-member {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+            z-index: 1;
+        }
+
+        .team-member:hover {
+            transform: translateY(-10px);
+        }
+
+        .member-img {
+            height: 200px;
+            background: linear-gradient(135deg, #eef1ff, #f5f7ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .member-svg {
+            width: 120px;
+            height: 120px;
+        }
+
+        .member-info {
+            padding: 25px;
+            text-align: center;
+        }
+
+        .member-info h4 {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+
+        .member-role {
+            color: var(--primary);
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .team-bg-svg {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            opacity: 0.05;
+            z-index: 0;
+        }
+
+        /* Services Page */
+        .services-content {
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px 30px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .service-card.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            z-index: 2;
+        }
+
+        .service-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #eef1ff, #f5f7ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 2rem;
+            color: var(--primary);
+            transition: var(--transition);
+        }
+
+        .service-card:hover .service-icon {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .service-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .services-bg-svg {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            z-index: 0;
+        }
+
+        /* Service Details */
+        .service-details {
+            margin-top: 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .detail-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            display: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .tech-item {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        /* Contact Page */
+        .contact-content {
+            padding: 100px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 50px;
+        }
+
+        .contact-info h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .contact-info p {
+            margin-bottom: 30px;
+            color: var(--gray);
+        }
+
+        .contact-details {
+            margin-top: 40px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 25px;
+        }
+
+        .contact-item i {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin-right: 15px;
+            margin-top: 5px;
+        }
+
+        .contact-form {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .contact-bg-svg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            opacity: 0.05;
+            z-index: 0;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 50px 0 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .footer-logo span {
+            color: var(--accent);
+        }
+
+        .footer-about p {
+            color: #bbb;
+            margin-bottom: 20px;
+        }
+
+        .footer-links h4, .footer-contact h4 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .footer-links h4::after, .footer-contact h4::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background: var(--primary);
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: #bbb;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+            padding-left: 5px;
+        }
+
+        .footer-contact p {
+            color: #bbb;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .footer-contact i {
+            margin-right: 10px;
+            color: var(--accent);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+            color: #bbb;
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-bg-svg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            z-index: 0;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes lineGrow {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .animate-on-scroll.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .hero h1 {
+                font-size: 2.8rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2.2rem;
+            }
+            
+            .process-step, .process-step.reverse {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .hero-svg {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            nav ul {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background-color: white;
+                flex-direction: column;
+                padding: 100px 20px 20px;
+                box-shadow: var(--shadow);
+                transform: translateX(-100%);
+                opacity: 0;
+                transition: var(--transition);
+                z-index: 999;
+                justify-content: flex-start;
+                gap: 20px;
+            }
+
+            nav ul.active {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            .hero h1 {
+                font-size: 2.3rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .stat-number {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero {
+                padding: 80px 0 60px;
+            }
+
+            .about-content, .services-content, .contact-content {
+                padding: 80px 0;
+            }
+
+            .contact-form {
+                padding: 30px 20px;
+            }
+            
+            .tab-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <div class="logo">
+                <i class="fas fa-eye"></i>
+                Vision<span>AI</span>
+            </div>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav>
+                <ul id="navMenu">
+                    <li><a href="#home" class="nav-link active" data-page="home">Home</a></li>
+                    <li><a href="#about" class="nav-link" data-page="about">About Us</a></li>
+                    <li><a href="#services" class="nav-link" data-page="services">Services</a></li>
+                    <li><a href="#contact" class="nav-link" data-page="contact">Contact Us</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Home Page -->
+        <section id="home-page" class="page active">
+            <!-- Hero Section with SVG -->
+            <div class="hero">
+                <!-- Hero SVG Graphic -->
+                <div class="hero-svg">
+                    <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="roadGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#4361ee" stop-opacity="0.3"/>
+                                <stop offset="100%" stop-color="#7209b7" stop-opacity="0.3"/>
+                            </linearGradient>
+                            <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#4361ee"/>
+                                <stop offset="100%" stop-color="#7209b7"/>
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Road -->
+                        <rect x="50" y="180" width="300" height="40" fill="#6c757d" rx="5"/>
+                        
+                        <!-- Road markings -->
+                        <rect x="100" y="195" width="200" height="10" fill="#f8f9fa" rx="5"/>
+                        <rect x="120" y="195" width="30" height="10" fill="#ffd166" rx="5"/>
+                        <rect x="180" y="195" width="30" height="10" fill="#ffd166" rx="5"/>
+                        <rect x="240" y="195" width="30" height="10" fill="#ffd166" rx="5"/>
+                        
+                        <!-- Defects -->
+                        <circle cx="150" cy="200" r="12" fill="#333" class="pulse-animation"/>
+                        <path d="M250,185 Q270,170 290,185" stroke="#e63946" stroke-width="4" fill="none" stroke-dasharray="5,5"/>
+                        <rect x="320" y="185" width="15" height="8" fill="#333" rx="2" class="pulse-animation"/>
+                        
+                        <!-- AI Brain Icon -->
+                        <g class="float-animation">
+                            <path d="M200,80 Q220,60 240,80 Q260,100 240,120 Q220,140 200,120 Q180,100 200,80Z" fill="url(#aiGradient)" opacity="0.8"/>
+                            <path d="M205,85 Q220,70 235,85 Q250,100 235,115 Q220,130 205,115 Q190,100 205,85Z" fill="white" opacity="0.3"/>
+                            <circle cx="210" cy="95" r="3" fill="white"/>
+                            <circle cx="230" cy="105" r="3" fill="white"/>
+                            <circle cx="220" cy="115" r="3" fill="white"/>
+                        </g>
+                        
+                        <!-- Camera -->
+                        <g class="float-animation" style="animation-delay: 0.5s">
+                            <rect x="100" y="100" width="40" height="30" fill="#212529" rx="3"/>
+                            <circle cx="120" cy="115" r="10" fill="#4cc9f0"/>
+                            <rect x="110" y="130" width="20" height="15" fill="#212529" rx="2"/>
+                        </g>
+                        
+                        <!-- Notification Bell -->
+                        <g class="float-animation" style="animation-delay: 1s">
+                            <path d="M300,100 Q310,80 320,100 L330,110 Q325,130 315,125 Q305,120 300,110Z" fill="#4bb543"/>
+                            <circle cx="315" cy="95" r="5" fill="#4bb543"/>
+                            <circle cx="315" cy="115" r="3" fill="white"/>
+                        </g>
+                        
+                        <!-- Connection Lines -->
+                        <path d="M120,115 Q150,150 180,100" stroke="#4361ee" stroke-width="2" fill="none" stroke-dasharray="5,5" class="dash-animation"/>
+                        <path d="M180,100 Q210,80 240,100" stroke="#7209b7" stroke-width="2" fill="none" stroke-dasharray="5,5" class="dash-animation" style="animation-delay: 0.3s"/>
+                        <path d="M240,100 Q270,120 300,115" stroke="#4bb543" stroke-width="2" fill="none" stroke-dasharray="5,5" class="dash-animation" style="animation-delay: 0.6s"/>
+                    </svg>
+                </div>
+                
+                <div class="container">
+                    <div class="hero-content">
+                        <h1>AI-Powered Road Defect Detection for HNAI</h1>
+                        <p>We leverage cutting-edge computer vision technology to automatically detect road defects, ensuring safer highways and efficient maintenance for the National Highways Authority of India.</p>
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <a href="#services" class="cta-button nav-link" data-page="services">Our Solutions</a>
+                            <a href="#contact" class="cta-button" style="background: white; color: var(--primary); border: 2px solid var(--primary); box-shadow: none;" data-page="contact">Schedule Demo</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container">
+                <!-- Stats Section -->
+                <div class="stats-section">
+                    <!-- Background SVG -->
+                    <svg class="stats-bg-svg" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                                <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#4361ee" stroke-opacity="0.1" stroke-width="1"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#grid)"/>
+                        
+                        <!-- Floating circles -->
+                        <circle cx="100" cy="100" r="30" fill="#4361ee" fill-opacity="0.05" class="float-animation"/>
+                        <circle cx="1100" cy="300" r="40" fill="#7209b7" fill-opacity="0.05" class="float-animation" style="animation-delay: 1s"/>
+                        <circle cx="800" cy="150" r="25" fill="#4cc9f0" fill-opacity="0.05" class="float-animation" style="animation-delay: 2s"/>
+                    </svg>
+                    
+                    <div class="section-title animate-on-scroll">
+                        <h2>Transforming Highway Maintenance</h2>
+                        <p style="margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;">Our AI-powered solution has already made a significant impact on India's highway infrastructure</p>
+                    </div>
+                    
+                    <div class="stats-container">
+                        <div class="stat-card animate-on-scroll">
+                            <div class="stat-number" data-target="12500">0</div>
+                            <div class="stat-label">Defects Detected Monthly</div>
+                        </div>
+                        
+                        <div class="stat-card animate-on-scroll">
+                            <div class="stat-number" data-target="98.7">0</div>
+                            <div class="stat-label">Detection Accuracy</div>
+                        </div>
+                        
+                        <div class="stat-card animate-on-scroll">
+                            <div class="stat-number" data-target="65">0</div>
+                            <div class="stat-label">Faster Response Time</div>
+                        </div>
+                        
+                        <div class="stat-card animate-on-scroll">
+                            <div class="stat-number" data-target="24000">0</div>
+                            <div class="stat-label">KM of Roads Monitored</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Process Section -->
+                <div class="process-section">
+                    <!-- Background SVG -->
+                    <svg class="process-svg-bg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="processGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#4361ee" stop-opacity="0.1"/>
+                                <stop offset="100%" stop-color="#7209b7" stop-opacity="0.1"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="M0,150 Q75,0 150,150 T300,150" fill="none" stroke="url(#processGradient)" stroke-width="2"/>
+                        <circle cx="150" cy="150" r="100" fill="none" stroke="url(#processGradient)" stroke-width="2"/>
+                    </svg>
+                    
+                    <div class="container">
+                        <div class="section-title animate-on-scroll">
+                            <h2>How Our Technology Works</h2>
+                            <p style="margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;">A seamless integration of AI, computer vision, and real-time notification systems</p>
+                        </div>
+                        
+                        <div class="process-container">
+                            <div class="process-step animate-on-scroll">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <div class="step-svg">
+                                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                            <defs>
+                                                <linearGradient id="step1Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stop-color="#4361ee"/>
+                                                    <stop offset="100%" stop-color="#4cc9f0"/>
+                                                </linearGradient>
+                                            </defs>
+                                            <circle cx="50" cy="50" r="40" fill="url(#step1Gradient)" opacity="0.9"/>
+                                            <rect x="30" y="40" width="40" height="25" fill="white" rx="3"/>
+                                            <circle cx="50" cy="45" r="8" fill="#212529"/>
+                                            <rect x="40" y="55" width="20" height="5" fill="#212529" rx="2"/>
+                                        </svg>
+                                    </div>
+                                    <h3>Road Imaging & Data Collection</h3>
+                                    <p>High-resolution cameras mounted on HNAI inspection vehicles capture detailed road surface images across the national highway network. Our system processes thousands of images per hour, covering extensive road segments with millimeter-level precision.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="process-step reverse animate-on-scroll">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <div class="step-svg">
+                                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                            <defs>
+                                                <linearGradient id="step2Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stop-color="#7209b7"/>
+                                                    <stop offset="100%" stop-color="#4361ee"/>
+                                                </linearGradient>
+                                            </defs>
+                                            <path d="M50,20 Q70,30 80,50 Q70,70 50,80 Q30,70 20,50 Q30,30 50,20Z" fill="url(#step2Gradient)" opacity="0.9"/>
+                                            <circle cx="35" cy="40" r="4" fill="white"/>
+                                            <circle cx="50" cy="50" r="4" fill="white"/>
+                                            <circle cx="65" cy="60" r="4" fill="white"/>
+                                            <circle cx="40" cy="65" r="4" fill="white"/>
+                                            <circle cx="60" cy="35" r="4" fill="white"/>
+                                            <path d="M35,40 L50,50 L65,60 M40,65 L50,50 L60,35" stroke="white" stroke-width="2" fill="none"/>
+                                        </svg>
+                                    </div>
+                                    <h3>AI-Powered Defect Analysis</h3>
+                                    <p>Our proprietary computer vision models analyze captured images to detect and classify various road defects including potholes, cracks, rutting, surface deterioration, and pavement markings. The system uses deep learning algorithms trained on over 2 million annotated road images.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="process-step animate-on-scroll">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <div class="step-svg">
+                                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                            <defs>
+                                                <linearGradient id="step3Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stop-color="#4bb543"/>
+                                                    <stop offset="100%" stop-color="#4cc9f0"/>
+                                                </linearGradient>
+                                            </defs>
+                                            <circle cx="50" cy="50" r="40" fill="url(#step3Gradient)" opacity="0.9"/>
+                                            <path d="M50,30 Q55,25 60,30 L65,35 Q70,40 65,45 L60,50 Q55,55 50,50 Q45,45 40,50 L35,45 Q30,40 35,35 L40,30 Q45,25 50,30Z" fill="white"/>
+                                            <circle cx="50" cy="50" r="10" fill="white"/>
+                                            <circle cx="50" cy="50" r="5" fill="#4bb543"/>
+                                            <circle cx="60" cy="40" r="3" fill="#4bb543"/>
+                                            <circle cx="40" cy="40" r="3" fill="#4bb543"/>
+                                        </svg>
+                                    </div>
+                                    <h3>Real-time Notification & Reporting</h3>
+                                    <p>Immediate alerts are automatically sent to HNAI maintenance teams with defect location (GPS coordinates), severity classification, recommended repair priority, and estimated repair time. The system integrates with HNAI's existing workflow management tools.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Us Page -->
+        <section id="about-page" class="page">
+            <div class="about-content">
+                <!-- Background SVG -->
+                <svg class="about-svg-bg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="aboutBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#4361ee" stop-opacity="0.05"/>
+                            <stop offset="50%" stop-color="#7209b7" stop-opacity="0.05"/>
+                            <stop offset="100%" stop-color="#4cc9f0" stop-opacity="0.05"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="50" y="50" width="400" height="400" fill="url(#aboutBgGradient)" rx="50"/>
+                    
+                    <!-- Abstract road network -->
+                    <path d="M100,150 L250,150 L400,300" stroke="#4361ee" stroke-width="3" fill="none" stroke-dasharray="8,8" opacity="0.3"/>
+                    <path d="M150,100 L150,250 L300,400" stroke="#7209b7" stroke-width="3" fill="none" stroke-dasharray="8,8" opacity="0.3"/>
+                    <path d="M200,200 L350,200" stroke="#4cc9f0" stroke-width="3" fill="none" stroke-dasharray="8,8" opacity="0.3"/>
+                    
+                    <!-- Nodes -->
+                    <circle cx="100" cy="150" r="10" fill="#4361ee" opacity="0.3"/>
+                    <circle cx="250" cy="150" r="10" fill="#4361ee" opacity="0.3"/>
+                    <circle cx="400" cy="300" r="10" fill="#4361ee" opacity="0.3"/>
+                    <circle cx="150" cy="100" r="10" fill="#7209b7" opacity="0.3"/>
+                    <circle cx="150" cy="250" r="10" fill="#7209b7" opacity="0.3"/>
+                    <circle cx="300" cy="400" r="10" fill="#7209b7" opacity="0.3"/>
+                    <circle cx="200" cy="200" r="10" fill="#4cc9f0" opacity="0.3"/>
+                    <circle cx="350" cy="200" r="10" fill="#4cc9f0" opacity="0.3"/>
+                </svg>
+                
+                <div class="container">
+                    <div class="section-title animate-on-scroll">
+                        <h2>About VisionAI</h2>
+                        <p style="margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;">Pioneering AI solutions for India's infrastructure since 2018</p>
+                    </div>
+                    
+                    <div class="about-grid">
+                        <div class="about-text">
+                            <h3 class="animate-on-scroll">Revolutionizing Road Maintenance with AI</h3>
+                            <p class="animate-on-scroll">VisionAI is a specialized technology company focused on developing advanced computer vision solutions for infrastructure monitoring. We partner with the National Highways Authority of India (HNAI) to enhance road safety and maintenance efficiency across India's vast highway network.</p>
+                            <p class="animate-on-scroll">Founded by experts in computer vision, civil engineering, and transportation logistics, our mission is to leverage artificial intelligence to create safer, more durable road infrastructure. Our team has developed a proprietary system that automatically detects road defects including potholes, cracks, surface deterioration, and other hazards with unprecedented accuracy.</p>
+                            
+                            <div class="about-features">
+                                <div class="feature animate-on-scroll">
+                                    <i class="fas fa-chart-line"></i>
+                                    <div>
+                                        <h4>Proven Accuracy & Reliability</h4>
+                                        <p>Our models achieve 99.2% accuracy in defect detection across varied road conditions, weather, and lighting situations. Validated across 15,000+ km of Indian highways.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="feature animate-on-scroll">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    <div>
+                                        <h4>Real-time Processing at Scale</h4>
+                                        <p>Process thousands of road images per hour with immediate defect classification. Our cloud-based infrastructure can scale to monitor India's entire 1.5 lakh km national highway network.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="feature animate-on-scroll">
+                                    <i class="fas fa-road"></i>
+                                    <div>
+                                        <h4>Strategic HNAI Partnership</h4>
+                                        <p>Working directly with HNAI since 2020 to implement our technology across national highways. Our system is now deployed in 8 states with plans for nationwide expansion.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="feature animate-on-scroll">
+                                    <i class="fas fa-award"></i>
+                                    <div>
+                                        <h4>Award-Winning Technology</h4>
+                                        <p>Recipient of the "Innovation in Infrastructure" award from the Ministry of Road Transport and Highways (2022) and "AI Solution of the Year" at India Tech Summit (2023).</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="about-visual">
+                            <div class="visual-card animate-on-scroll">
+                                <h3>Our Impact in Numbers</h3>
+                                <p style="margin-top: 20px; font-size: 1.1rem;">Since implementation in 2020, our system has delivered measurable results:</p>
+                                <div class="feature" style="margin-top: 25px;">
+                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                    <div>
+                                        <h4>Detected over 250,000+ road defects</h4>
+                                        <p>Preventing potential accidents and vehicle damage</p>
+                                    </div>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                    <div>
+                                        <h4>Reduced maintenance response time by 65%</h4>
+                                        <p>From average 72 hours to under 24 hours for critical defects</p>
+                                    </div>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                    <div>
+                                        <h4>Prevented an estimated 500+ accidents</h4>
+                                        <p>Through early detection of hazardous road conditions</p>
+                                    </div>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                    <div>
+                                        <h4>Saved ₹42+ crores in maintenance costs</h4>
+                                        <p>Through preventive maintenance and optimized repair schedules</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Section -->
+            <div class="team-section">
+                <!-- Background SVG -->
+                <svg class="team-bg-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="teamPattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+                            <circle cx="40" cy="40" r="20" fill="#4361ee" fill-opacity="0.05"/>
+                            <circle cx="40" cy="40" r="10" fill="#7209b7" fill-opacity="0.05"/>
+                        </pattern>
+                    </defs>
+                    <rect x="0" y="0" width="400" height="400" fill="url(#teamPattern)"/>
+                </svg>
+                
+                <div class="container">
+                    <div class="section-title animate-on-scroll">
+                        <h2>Our Leadership Team</h2>
+                        <p style="margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;">Experts in AI, computer vision, and transportation infrastructure</p>
+                    </div>
+                    
+                    <div class="team-container">
+                        <div class="team-member animate-on-scroll">
+                            <div class="member-img">
+                                <svg class="member-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="member1Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4361ee"/>
+                                            <stop offset="100%" stop-color="#4cc9f0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle cx="60" cy="60" r="55" fill="url(#member1Gradient)"/>
+                                    <circle cx="60" cy="45" r="20" fill="white"/>
+                                    <path d="M40,90 Q60,70 80,90" fill="white"/>
+                                </svg>
+                            </div>
+                            <div class="member-info">
+                                <h4>Dr. Arjun Mehta</h4>
+                                <div class="member-role">CEO & Founder</div>
+                                <p>PhD in Computer Vision from IIT Delhi, Former Head of AI Research at a leading tech company</p>
+                            </div>
+                        </div>
+                        
+                        <div class="team-member animate-on-scroll">
+                            <div class="member-img">
+                                <svg class="member-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="member2Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#7209b7"/>
+                                            <stop offset="100%" stop-color="#4361ee"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle cx="60" cy="60" r="55" fill="url(#member2Gradient)"/>
+                                    <circle cx="60" cy="45" r="20" fill="white"/>
+                                    <path d="M40,90 Q60,70 80,90" fill="white"/>
+                                </svg>
+                            </div>
+                            <div class="member-info">
+                                <h4>Priya Sharma</h4>
+                                <div class="member-role">CTO</div>
+                                <p>MS in Machine Learning from Stanford, 10+ years experience in AI infrastructure</p>
+                            </div>
+                        </div>
+                        
+                        <div class="team-member animate-on-scroll">
+                            <div class="member-img">
+                                <svg class="member-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="member3Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4bb543"/>
+                                            <stop offset="100%" stop-color="#4cc9f0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle cx="60" cy="60" r="55" fill="url(#member3Gradient)"/>
+                                    <circle cx="60" cy="45" r="20" fill="white"/>
+                                    <path d="M40,90 Q60,70 80,90" fill="white"/>
+                                </svg>
+                            </div>
+                            <div class="member-info">
+                                <h4>Rajesh Kumar</h4>
+                                <div class="member-role">Head of HNAI Partnerships</div>
+                                <p>Former Deputy Director at NHAI, 15+ years in highway infrastructure management</p>
+                            </div>
+                        </div>
+                        
+                        <div class="team-member animate-on-scroll">
+                            <div class="member-img">
+                                <svg class="member-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="member4Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#f9a826"/>
+                                            <stop offset="100%" stop-color="#4361ee"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle cx="60" cy="60" r="55" fill="url(#member4Gradient)"/>
+                                    <circle cx="60" cy="45" r="20" fill="white"/>
+                                    <path d="M40,90 Q60,70 80,90" fill="white"/>
+                                </svg>
+                            </div>
+                            <div class="member-info">
+                                <h4>Dr. Anjali Patel</h4>
+                                <div class="member-role">Lead AI Researcher</div>
+                                <p>PhD in Deep Learning, Published 20+ papers on computer vision applications</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Page -->
+        <section id="services-page" class="page">
+            <div class="services-content">
+                <!-- Background SVG -->
+                <svg class="services-bg-svg" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="servicesPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                            <path d="M0,50 L50,0 L100,50 L50,100Z" fill="none" stroke="#4361ee" stroke-opacity="0.05" stroke-width="2"/>
+                        </pattern>
+                    </defs>
+                    <rect x="0" y="0" width="1200" height="800" fill="url(#servicesPattern)"/>
+                    
+                    <!-- Abstract tech elements -->
+                    <g opacity="0.1">
+                        <circle cx="200" cy="300" r="50" fill="#4361ee"/>
+                        <rect x="400" cy="400" width="80" height="80" fill="#7209b7" transform="rotate(45 400 400)"/>
+                        <polygon points="800,200 850,300 750,300" fill="#4cc9f0"/>
+                        <circle cx="1000" cy="500" r="40" fill="#4bb543"/>
+                        <rect x="600" cy="600" width="60" height="60" fill="#f9a826" rx="10"/>
+                    </g>
+                </svg>
+                
+                <div class="container">
+                    <div class="section-title animate-on-scroll">
+                        <h2>Our Comprehensive Services</h2>
+                        <p style="margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;">End-to-end solutions for HNAI road defect detection and management</p>
+                    </div>
+                    
+                    <div class="services-grid">
+                        <div class="service-card animate-on-scroll">
+                            <div class="service-icon">
+                                <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="service1Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4361ee"/>
+                                            <stop offset="100%" stop-color="#4cc9f0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <rect x="10" y="15" width="30" height="20" fill="url(#service1Gradient)" rx="3"/>
+                                    <circle cx="15" cy="20" r="8" fill="white"/>
+                                    <rect x="20" y="25" width="15" height="8" fill="#333" rx="2"/>
+                                </svg>
+                            </div>
+                            <h3>Road Defect Detection</h3>
+                            <p>Advanced computer vision models that identify potholes, cracks, rutting, raveling, and other surface defects with millimeter precision. Our system classifies defects by severity for prioritized response.</p>
+                        </div>
+                        
+                        <div class="service-card animate-on-scroll">
+                            <div class="service-icon">
+                                <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="service2Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#7209b7"/>
+                                            <stop offset="100%" stop-color="#4361ee"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <rect x="5" y="5" width="40" height="40" fill="url(#service2Gradient)" rx="5"/>
+                                    <circle cx="25" cy="25" r="15" fill="white"/>
+                                    <path d="M15,15 L35,35" stroke="#333" stroke-width="3"/>
+                                    <path d="M35,15 L15,35" stroke="#333" stroke-width="3"/>
+                                </svg>
+                            </div>
+                            <h3>Defect Mapping & Tracking</h3>
+                            <p>GIS-integrated system that maps all detected defects, tracks repair progress, and monitors defect evolution over time. Provides historical data analysis to identify recurring problem areas.</p>
+                        </div>
+                        
+                        <div class="service-card animate-on-scroll">
+                            <div class="service-icon">
+                                <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="service3Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4bb543"/>
+                                            <stop offset="100%" stop-color="#4cc9f0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M10,25 L25,10 L40,25 L25,40Z" fill="url(#service3Gradient)"/>
+                                    <circle cx="25" cy="25" r="8" fill="white"/>
+                                    <text x="25" y="28" text-anchor="middle" fill="#333" font-size="10" font-weight="bold">1</text>
+                                </svg>
+                            </div>
+                            <h3>Maintenance Prioritization</h3>
+                            <p>AI-powered prioritization engine that recommends repair schedules based on defect severity, traffic volume, weather conditions, and available resources. Optimizes maintenance workflows.</p>
+                        </div>
+                        
+                        <div class="service-card animate-on-scroll">
+                            <div class="service-icon">
+                                <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="service4Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#f9a826"/>
+                                            <stop offset="100%" stop-color="#4361ee"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <rect x="10" y="10" width="30" height="30" fill="url(#service4Gradient)" rx="5"/>
+                                    <rect x="15" y="15" width="20" height="5" fill="white"/>
+                                    <rect x="15" y="25" width="15" height="5" fill="white"/>
+                                    <rect x="15" y="30" width="10" height="5" fill="white"/>
+                                </svg>
+                            </div>
+                            <h3>Analytics & Reporting</h3>
+                            <p>Comprehensive dashboards and reports for HNAI management with insights on road conditions, repair efficiency, budget allocation, and predictive maintenance needs. Customizable reports.</p>
+                        </div>
+                        
+                        <div class="service-card animate-on-scroll">
+                            <div class="service-icon">
+                                <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="service5Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4361ee"/>
+                                            <stop offset="100%" stop-color="#7209b7"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <rect x="10" y="10" width="30" height="30" fill="url(#service5Gradient)" rx="10"/>
+                                    <circle cx="25" cy="20" r="8" fill="white"/>
+                                    <rect x="20" y="30" width="10" height="5" fill="white" rx="2"/>
+                                </svg>
+                            </div>
+                            <h3>Mobile Inspection App</h3>
+                            <p>Mobile application for HNAI field teams to validate defects, update repair status, add new observations, and capture additional images. Works offline with automatic sync when connected.</p>
+                        </div>
+                        
+                        <div class="service-card animate-on-scroll">
+                            <div class="service-icon">
+                                <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="service6Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#4cc9f0"/>
+                                            <stop offset="100%" stop-color="#4bb543"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle cx="25" cy="25" r="20" fill="url(#service6Gradient)"/>
+                                    <rect x="15" y="20" width="20" height="10" fill="white" rx="2"/>
+                                    <circle cx="20" cy="25" r="3" fill="#333"/>
+                                    <circle cx="30" cy="25" r="3" fill="#333"/>
+                                </svg>
+                            </div>
+                            <h3>System Integration</h3>
+                            <p>Seamless integration with existing HNAI systems and workflows including SAP, maintenance management software, and communication platforms. Custom API development for data exchange.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Service Details -->
+                    <div class="service-details">
+                        <div class="section-title animate-on-scroll">
+                            <h2>Technology & Implementation</h2>
+                            <p style="margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;">Advanced AI models tailored for Indian road conditions</p>
+                        </div>
+                        
+                        <div class="detail-tabs animate-on-scroll">
+                            <button class="tab-btn active" data-tab="tech">Technology Stack</button>
+                            <button class="tab-btn" data-tab="models">AI Models</button>
+                            <button class="tab-btn" data-tab="implementation">Implementation</button>
+                            <button class="tab-btn" data-tab="support">Support & Training</button>
+                        </div>
+                        
+                        <div class="tab-content active" id="tech-tab">
+                            <h3>Advanced Technology Infrastructure</h3>
+                            <p>Our solution is built on a modern, scalable technology stack designed specifically for large-scale infrastructure monitoring:</p>
+                            <ul style="margin-top: 20px; margin-left: 20px;">
+                                <li><strong>Cloud Architecture:</strong> AWS-based scalable infrastructure with edge computing capabilities for real-time processing</li>
+                                <li><strong>Data Pipeline:</strong> Automated ingestion, processing, and storage of millions of road images monthly</li>
+                                <li><strong>Computer Vision Framework:</strong> Custom models built on PyTorch with TensorRT optimization for inference speed</li>
+                                <li><strong>Geospatial Database:</strong> PostgreSQL with PostGIS extension for spatial data management and querying</li>
+                                <li><strong>API Layer:</strong> RESTful APIs for seamless integration with HNAI systems</li>
+                            </ul>
+                            <div class="tech-stack">
+                                <div class="tech-item">TensorFlow</div>
+                                <div class="tech-item">PyTorch</div>
+                                <div class="tech-item">OpenCV</div>
+                                <div class="tech-item">AWS SageMaker</div>
+                                <div class="tech-item">PostgreSQL</div>
+                                <div class="tech-item">Docker</div>
+                                <div class="tech-item">Kubernetes</div>
+                                <div class="tech-item">React Native</div>
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="models-tab">
+                            <h3>Specialized AI Models for Road Defects</h3>
+                            <p>Our computer vision models are specifically trained and optimized for Indian road conditions:</p>
+                            <ul style="margin-top: 20px; margin-left: 20px;">
+                                <li><strong>Pothole Detection Model:</strong> Detects potholes from 5cm to 2m diameter with depth estimation</li>
+                                <li><strong>Crack Classification Model:</strong> Identifies transverse, longitudinal, and alligator cracks with severity grading</li>
+                                <li><strong>Surface Condition Model:</strong> Assesses raveling, bleeding, polishing, and other surface defects</li>
+                                <li><strong>Pavement Marking Model:</strong> Evaluates visibility and condition of road markings and signage</li>
+                                <li><strong>Multi-defect Model:</strong> Simultaneously detects and classifies multiple defect types in a single image</li>
+                            </ul>
+                            <p style="margin-top: 20px;"><strong>Training Data:</strong> Our models are trained on over 2 million annotated images from Indian highways across different seasons, weather conditions, and times of day.</p>
+                        </div>
+                        
+                        <div class="tab-content" id="implementation-tab">
+                            <h3>Phased Implementation Approach</h3>
+                            <p>We follow a structured 4-phase implementation process to ensure smooth deployment and adoption:</p>
+                            <ol style="margin-top: 20px; margin-left: 20px;">
+                                <li><strong>Assessment & Planning (2-4 weeks):</strong> Infrastructure evaluation, requirement gathering, and deployment planning</li>
+                                <li><strong>Pilot Deployment (4-8 weeks):</strong> Limited deployment on selected highway segments, system calibration, and user training</li>
+                                <li><strong>Full Deployment (8-12 weeks):</strong> System-wide rollout, integration with existing workflows, and performance optimization</li>
+                                <li><strong>Optimization & Scaling (Ongoing):</strong> Continuous improvement, model retraining, and scaling to additional highway networks</li>
+                            </ol>
+                            <p style="margin-top: 20px;"><strong>Typical Timeline:</strong> 14-24 weeks from contract signing to full operational deployment.</p>
+                        </div>
+                        
+                        <div class="tab-content" id="support-tab">
+                            <h3>Comprehensive Support & Training</h3>
+                            <p>We provide extensive support to ensure HNAI teams can effectively use our system:</p>
+                            <ul style="margin-top: 20px; margin-left: 20px;">
+                                <li><strong>Technical Training:</strong> Hands-on training for HNAI engineers, maintenance teams, and management staff</li>
+                                <li><strong>24/7 Technical Support:</strong> Dedicated support team available round-the-clock for critical issues</li>
+                                <li><strong>Regular System Updates:</strong> Monthly model improvements and quarterly feature updates based on user feedback</li>
+                                <li><strong>Performance Monitoring:</strong> Continuous monitoring of system performance with monthly reports</li>
+                                <li><strong>On-site Assistance:</strong> Field support during initial deployment and for major system updates</li>
+                            </ul>
+                            <p style="margin-top: 20px;"><strong>Success Metrics:</strong> We commit to 99.5% system uptime and 4-hour response time for critical issues.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Us Page -->
+        <section id="contact-page" class="page">
+            <div class="contact-content">
+                <!-- Background SVG -->
+                <svg class="contact-bg-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="contactGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#4361ee" stop-opacity="0.05"/>
+                            <stop offset="100%" stop-color="#4cc9f0" stop-opacity="0.05"/>
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Abstract communication lines -->
+                    <circle cx="200" cy="200" r="150" fill="none" stroke="url(#contactGradient)" stroke-width="2"/>
+                    
+                    <!-- Nodes with connection lines -->
+                    <g>
+                        <circle cx="200" cy="80" r="15" fill="#4361ee" fill-opacity="0.1"/>
+                        <circle cx="320" cy="150" r="15" fill="#7209b7" fill-opacity="0.1"/>
+                        <circle cx="320" cy="250" r="15" fill="#4cc9f0" fill-opacity="0.1"/>
+                        <circle cx="200" cy="320" r="15" fill="#4bb543" fill-opacity="0.1"/>
+                        <circle cx="80" cy="250" r="15" fill="#f9a826" fill-opacity="0.1"/>
+                        <circle cx="80" cy="150" r="15" fill="#e63946" fill-opacity="0.1"/>
+                        
+                        <path d="M200,80 L320,150" stroke="#4361ee" stroke-opacity="0.1" stroke-width="2"/>
+                        <path d="M320,150 L320,250" stroke="#7209b7" stroke-opacity="0.1" stroke-width="2"/>
+                        <path d="M320,250 L200,320" stroke="#4cc9f0" stroke-opacity="0.1" stroke-width="2"/>
+                        <path d="M200,320 L80,250" stroke="#4bb543" stroke-opacity="0.1" stroke-width="2"/>
+                        <path d="M80,250 L80,150" stroke="#f9a826" stroke-opacity="0.1" stroke-width="2"/>
+                        <path d="M80,150 L200,80" stroke="#e63946" stroke-opacity="0.1" stroke-width="2"/>
+                    </g>
+                    
+                    <!-- Central node -->
+                    <circle cx="200" cy="200" r="30" fill="#4361ee" fill-opacity="0.2"/>
+                    <circle cx="200" cy="200" r="20" fill="#4361ee" fill-opacity="0.3"/>
+                    <circle cx="200" cy="200" r="10" fill="#4361ee" fill-opacity="0.5"/>
+                </svg>
+                
+                <div class="container">
+                    <div class="section-title animate-on-scroll">
+                        <h2>Contact Us</h2>
+                        <p style="margin-top: 20px; max-width: 700px; margin-left: auto; margin-right: auto;">Get in touch to schedule a demo or discuss partnership opportunities with HNAI</p>
+                    </div>
+                    
+                    <div class="contact-container">
+                        <div class="contact-info animate-on-scroll">
+                            <h3>Get In Touch With VisionAI</h3>
+                            <p>Interested in implementing our computer vision technology for road defect detection? Contact our team to schedule a demonstration or discuss partnership opportunities with HNAI. We'll show you how our solution can transform your highway maintenance operations.</p>
+                            
+                            <div class="contact-details">
+                                <div class="contact-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <div>
+                                        <h4>Our Office</h4>
+                                        <p>Tech Park, Sector 62, Noida, Uttar Pradesh 201309</p>
+                                        <p style="margin-top: 5px; font-size: 0.9rem;">(Near HNAI Regional Office)</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="contact-item">
+                                    <i class="fas fa-phone-alt"></i>
+                                    <div>
+                                        <h4>Phone Number</h4>
+                                        <p>+91 11 4050 1234 (Office)</p>
+                                        <p>+91 98765 43210 (HNAI Partnership Helpline)</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="contact-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <div>
+                                        <h4>Email Address</h4>
+                                        <p>partnerships@visionai-hnai.com</p>
+                                        <p>support@visionai-hnai.com (Technical Support)</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="contact-item">
+                                    <i class="fas fa-clock"></i>
+                                    <div>
+                                        <h4>Business Hours</h4>
+                                        <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+                                        <p>Emergency Support: 24/7 for critical HNAI issues</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-form animate-on-scroll">
+                            <form id="contactForm">
+                                <div class="form-group">
+                                    <label for="name">Full Name *</label>
+                                    <input type="text" id="name" class="form-control" placeholder="Enter your name" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="email">Email Address *</label>
+                                    <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="phone">Phone Number</label>
+                                    <input type="tel" id="phone" class="form-control" placeholder="Enter your phone number">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="organization">Organization *</label>
+                                    <input type="text" id="organization" class="form-control" placeholder="HNAI or related organization" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="designation">Designation / Role</label>
+                                    <input type="text" id="designation" class="form-control" placeholder="Your position in the organization">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="message">Your Message *</label>
+                                    <textarea id="message" class="form-control" rows="5" placeholder="Tell us about your requirements, specific highways of interest, or schedule a demo..." required></textarea>
+                                </div>
+                                
+                                <button type="submit" class="cta-button" style="width: 100%;">Send Message</button>
+                                <p style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: var(--gray);">We typically respond within 2 business hours</p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <!-- Background SVG -->
+        <svg class="footer-bg-svg" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="footerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#4361ee" stop-opacity="0.03"/>
+                    <stop offset="100%" stop-color="#7209b7" stop-opacity="0.03"/>
+                </linearGradient>
+            </defs>
+            <rect width="1200" height="400" fill="url(#footerGradient)"/>
+            
+            <!-- Abstract footer elements -->
+            <path d="M0,200 Q200,100 400,200 T800,200 T1200,200" fill="none" stroke="#4cc9f0" stroke-opacity="0.05" stroke-width="2"/>
+            <path d="M0,300 Q300,250 600,300 T1200,300" fill="none" stroke="#4bb543" stroke-opacity="0.05" stroke-width="2"/>
+        </svg>
+        
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-about">
+                    <div class="footer-logo">
+                        <i class="fas fa-eye"></i>
+                        Vision<span>AI</span>
+                    </div>
+                    <p>Transforming road maintenance with AI-powered computer vision technology for HNAI and safer Indian highways. Partnering with the National Highways Authority of India since 2020.</p>
+                    <div style="margin-top: 20px;">
+                        <a href="#" style="color: white; margin-right: 15px; font-size: 1.2rem;"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" style="color: white; margin-right: 15px; font-size: 1.2rem;"><i class="fab fa-twitter"></i></a>
+                        <a href="#" style="color: white; margin-right: 15px; font-size: 1.2rem;"><i class="fab fa-facebook"></i></a>
+                        <a href="#" style="color: white; margin-right: 15px; font-size: 1.2rem;"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#home" class="nav-link" data-page="home">Home</a></li>
+                        <li><a href="#about" class="nav-link" data-page="about">About Us</a></li>
+                        <li><a href="#services" class="nav-link" data-page="services">Services</a></li>
+                        <li><a href="#contact" class="nav-link" data-page="contact">Contact Us</a></li>
+                        <li><a href="#" style="color: var(--accent);">HNAI Portal Login</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-contact">
+                    <h4>Contact Info</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> Tech Park, Sector 62, Noida, UP</p>
+                    <p><i class="fas fa-phone-alt"></i> +91 11 4050 1234</p>
+                    <p><i class="fas fa-envelope"></i> partnerships@visionai-hnai.com</p>
+                    <p><i class="fas fa-clock"></i> Mon-Fri: 9:00 AM - 6:00 PM</p>
+                    <p><i class="fas fa-file-contract"></i> <a href="#" style="color: #bbb;">Download Brochure</a></p>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2023 VisionAI Technologies Pvt. Ltd. All rights reserved. | Developed for HNAI Road Defect Detection | ISO 27001 Certified</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navMenu = document.getElementById('navMenu');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.page');
+        const statNumbers = document.querySelectorAll('.stat-number');
+        const animateElements = document.querySelectorAll('.animate-on-scroll');
+        const features = document.querySelectorAll('.feature');
+        const serviceCards = document.querySelectorAll('.service-card');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Mobile Menu Toggle
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+            mobileMenuBtn.innerHTML = navMenu.classList.contains('active') 
+                ? '<i class="fas fa-times"></i>' 
+                : '<i class="fas fa-bars"></i>';
+        });
+        
+        // Page Navigation
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Get the target page
+                const targetPage = link.getAttribute('data-page');
+                
+                // Hide all pages
+                pages.forEach(page => {
+                    page.classList.remove('active');
+                });
+                
+                // Show target page
+                document.getElementById(`${targetPage}-page`).classList.add('active');
+                
+                // Update active link
+                navLinks.forEach(navLink => {
+                    navLink.classList.remove('active');
+                });
+                link.classList.add('active');
+                
+                // Close mobile menu if open
+                if (navMenu.classList.contains('active')) {
+                    navMenu.classList.remove('active');
+                    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                }
+                
+                // Scroll to top
+                window.scrollTo({top: 0, behavior: 'smooth'});
+                
+                // Animate stats on home page
+                if (targetPage === 'home') {
+                    setTimeout(() => {
+                        animateStats();
+                    }, 500);
+                }
+                
+                // Animate features on about page
+                if (targetPage === 'about') {
+                    setTimeout(() => {
+                        animateFeatures();
+                    }, 500);
+                }
+                
+                // Animate service cards on services page
+                if (targetPage === 'services') {
+                    setTimeout(() => {
+                        animateServiceCards();
+                    }, 500);
+                }
+            });
+        });
+        
+        // Contact Form Submission
+        const contactForm = document.getElementById('contactForm');
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Get form values
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const organization = document.getElementById('organization').value;
+            
+            // Show success message
+            alert(`Thank you ${name} from ${organization}! Your message has been received. We'll contact you at ${email} shortly to schedule a demo or discussion.`);
+            
+            // Reset form
+            contactForm.reset();
+        });
+        
+        // Tab functionality for services page
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // Update active tab button
+                tabBtns.forEach(tb => tb.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Show active tab content
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Animate stats counter
+        function animateStats() {
+            statNumbers.forEach(stat => {
+                const target = parseInt(stat.getAttribute('data-target'));
+                const suffix = stat.textContent.includes('%') ? '%' : '';
+                const increment = target / 100;
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    stat.textContent = suffix === '%' 
+                        ? current.toFixed(1) + suffix 
+                        : Math.floor(current).toLocaleString() + suffix;
+                }, 20);
+            });
+        }
+        
+        // Animate features on about page
+        function animateFeatures() {
+            features.forEach((feature, index) => {
+                setTimeout(() => {
+                    feature.classList.add('animated');
+                }, index * 200);
+            });
+        }
+        
+        // Animate service cards on services page
+        function animateServiceCards() {
+            serviceCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('animated');
+                }, index * 150);
+            });
+        }
+        
+        // Add SVG animations
+        function initSVGAnimations() {
+            // Add animation classes to SVG elements
+            const svgs = document.querySelectorAll('svg');
+            svgs.forEach(svg => {
+                // Add pulse animation to defect circles
+                const defectCircles = svg.querySelectorAll('.pulse-animation');
+                defectCircles.forEach(circle => {
+                    circle.style.animation = 'pulse 2s infinite';
+                });
+                
+                // Add float animation to floating elements
+                const floatElements = svg.querySelectorAll('.float-animation');
+                floatElements.forEach(el => {
+                    const delay = el.getAttribute('style')?.includes('animation-delay') 
+                        ? parseFloat(el.style.animationDelay) 
+                        : 0;
+                    el.style.animation = `float ${3 + delay}s infinite ease-in-out`;
+                });
+                
+                // Add dash animation to dashed lines
+                const dashElements = svg.querySelectorAll('.dash-animation');
+                dashElements.forEach(el => {
+                    const length = el.getTotalLength();
+                    el.style.strokeDasharray = length;
+                    el.style.strokeDashoffset = length;
+                    
+                    const delay = el.getAttribute('style')?.includes('animation-delay') 
+                        ? parseFloat(el.style.animationDelay) 
+                        : 0;
+                    
+                    setTimeout(() => {
+                        el.style.transition = 'stroke-dashoffset 2s ease-in-out';
+                        el.style.strokeDashoffset = '0';
+                    }, delay * 1000);
+                });
+            });
+        }
+        
+        // Scroll Animation
+        function checkScroll() {
+            animateElements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (elementTop < windowHeight - 100) {
+                    element.classList.add('animated');
+                    
+                    // If element is a stat number on home page, animate it
+                    if (element.classList.contains('stat-card') && document.getElementById('home-page').classList.contains('active')) {
+                        setTimeout(() => {
+                            animateStats();
+                        }, 300);
+                    }
+                }
+            });
+        }
+        
+        // Initial animations
+        setTimeout(() => {
+            // Animate home page elements
+            if (document.getElementById('home-page').classList.contains('active')) {
+                animateStats();
+            }
+            
+            // Animate about page features
+            if (document.getElementById('about-page').classList.contains('active')) {
+                animateFeatures();
+            }
+            
+            // Animate service cards
+            if (document.getElementById('services-page').classList.contains('active')) {
+                animateServiceCards();
+            }
+            
+            // Initialize SVG animations
+            initSVGAnimations();
+        }, 500);
+        
+        // Initial check for scroll animations
+        checkScroll();
+        
+        // Check on scroll
+        window.addEventListener('scroll', checkScroll);
+        
+        // Add some random animation delays for visual interest
+        animateElements.forEach((element, index) => {
+            element.style.transitionDelay = `${index * 0.1}s`;
+        });
+        
+        // Service cards animation delay
+        serviceCards.forEach((card, index) => {
+            card.style.transitionDelay = `${index * 0.1}s`;
+        });
+    </script>
+</body>
+</html>
